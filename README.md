@@ -1,5 +1,5 @@
 # flutter_intro_mobile_lr_nk
-
+Laurens Rombout, Neta Kiala
 A new Flutter project.
 
 ## Getting Started
