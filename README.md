@@ -1,5 +1,5 @@
 # flutter_intro_mobile_lr_nk
-Laurens Rombout, Neta Kiala
+Laurens Rombout, Neta Kiala, groep 19
 A new Flutter project.
 
 ## Getting Started
