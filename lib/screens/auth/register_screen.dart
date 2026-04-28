@@ -65,7 +65,22 @@ Future<void> _register() async {
 
   try {
     /// Firebase account aanmaken
-    await _authService.register(email, password);
+    final user = await _authService.register(email, password);
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Registratie mislukt"),
+        ),
+      );
+      return;
+    }
+
+    await user.updateDisplayName(name);
+    await user.reload();
+    if (!mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -82,6 +97,9 @@ Future<void> _register() async {
       (route) => false,
     );
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Fout: $e"),
