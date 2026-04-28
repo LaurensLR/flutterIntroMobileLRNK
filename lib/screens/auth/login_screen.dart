@@ -1,222 +1,381 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'register_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'register/register_screen.dart';
 import '../../firebase/auth_service.dart';
 import '../home/home_screen.dart';
 
-/// Login screen voor RentBy
-/// Wit design met groene accenten.
+/// RentBy Login Screen
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() =>
+      _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  /// Controllers voor invoervelden
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
+class _LoginScreenState
+    extends State<LoginScreen> {
+  final TextEditingController
+  _loginController =
+  TextEditingController();
 
-  /// Wachtwoord tonen/verbergen
+  final TextEditingController
+  _passwordController =
+  TextEditingController();
+
+  final AuthService _authService =
+  AuthService();
+
   bool _obscurePassword = true;
+
+  static const Color primaryGreen =
+  Color(0xFF2E7D32);
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _loginController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  /// Login functie met Firebase + navigatie naar HomeScreen
-Future<void> _login() async {
-  final email = _emailController.text.trim();
-  final password = _passwordController.text.trim();
+  /// Login
+  Future<void> _login() async {
+    String login =
+    _loginController.text.trim();
 
-  if (email.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Vul e-mail en wachtwoord in"),
-      ),
-    );
-    return;
+    final password =
+    _passwordController.text.trim();
+
+    if (login.isEmpty ||
+        password.isEmpty) {
+      _showSnack(
+          "Vul alle velden in");
+      return;
+    }
+
+    try {
+      /// username -> email
+      if (!login.contains("@")) {
+        final query =
+        await FirebaseFirestore
+            .instance
+            .collection(
+            "users")
+            .where(
+          "username",
+          isEqualTo: login
+              .toLowerCase(),
+        )
+            .limit(1)
+            .get();
+
+        if (query.docs.isEmpty) {
+          throw Exception();
+        }
+
+        login = query
+            .docs.first["email"];
+      }
+
+      await _authService.login(
+        login,
+        password,
+      );
+
+      Navigator.pushReplacement(
+        context,
+        CupertinoPageRoute(
+          builder: (_) =>
+          const HomeScreen(),
+        ),
+      );
+    } catch (e) {
+      _showSnack(
+          "Login mislukt");
+    }
   }
 
-  try {
-    /// Inloggen via AuthService
-    await _authService.login(email, password);
-
-    /// Naar HomeScreen gaan
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomeScreen(),
-      ),
-    );
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  void _showSnack(String text) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       SnackBar(
-        content: Text("Login mislukt"),
+        content: Text(text),
+        behavior:
+        SnackBarBehavior
+            .floating,
       ),
     );
   }
-}
 
-  /// Naar register scherm
   void _goToRegister() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const RegisterScreen(),
+      CupertinoPageRoute(
+        builder: (_) =>
+        const RegisterScreen(),
+      ),
+    );
+  }
+
+  Widget _input({
+    required TextEditingController
+    controller,
+    required String label,
+    bool obscure = false,
+    Widget? suffix,
+  }) {
+    return Container(
+      margin:
+      const EdgeInsets.only(
+          bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(
+            0xFFF5F5F5),
+        borderRadius:
+        BorderRadius.circular(
+            18),
+        border: Border.all(
+          color: const Color(
+              0xFFE8E8E8),
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        decoration:
+        InputDecoration(
+          hintText: label,
+          border:
+          InputBorder.none,
+          contentPadding:
+          const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 18,
+          ),
+          suffixIcon: suffix,
+        ),
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    const Color primaryGreen = Color(0xFF2E7D32);
-
+  Widget build(
+      BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                /// App naam
-                const Text(
-                  "RentBy",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: primaryGreen,
-                    letterSpacing: 1,
+      backgroundColor:
+      Colors.white,
+
+      body: SafeArea(
+        child: Column(
+          children: [
+            /// FOTO HEADER
+            SizedBox(
+              height: 300,
+              width:
+              double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    "assets/images/login_header.png",
+                    fit: BoxFit.cover,
                   ),
-                ),
 
-                const SizedBox(height: 12),
-
-                /// Welkom tekst
-                const Text(
-                  "Welkom terug",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                /// Email veld
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: "E-mail",
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: primaryGreen,
-                        width: 2,
+                  /// fade
+                  Container(
+                    decoration:
+                    const BoxDecoration(
+                      gradient:
+                      LinearGradient(
+                        begin: Alignment
+                            .topCenter,
+                        end: Alignment
+                            .bottomCenter,
+                        colors: [
+                          Colors
+                              .transparent,
+                          Colors
+                              .white,
+                        ],
+                        stops: [
+                          0.55,
+                          1
+                        ],
                       ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 18),
-
-                /// Password veld
-                TextField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: "Wachtwoord",
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: primaryGreen,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                /// Login knop
-                SizedBox(
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryGreen,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      "Inloggen",
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 22),
-
-                /// Register tekst
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Nog geen account?",
-                      style: TextStyle(color: Colors.black87),
-                    ),
-                    TextButton(
-                      onPressed: _goToRegister,
-                      child: const Text(
-                        "Maak hier een account aan!",
-                        style: TextStyle(
-                          color: primaryGreen,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+
+            /// CONTENT
+            Expanded(
+              child: Center(
+                child:
+                SingleChildScrollView(
+                  padding:
+                  const EdgeInsets
+                      .all(24),
+                  child:
+                  ConstrainedBox(
+                    constraints:
+                    const BoxConstraints(
+                      maxWidth:
+                      420,
+                    ),
+                    child: Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .stretch,
+                      children: [
+                        const Text(
+                          "RentBy",
+                          textAlign:
+                          TextAlign
+                              .center,
+                          style:
+                          TextStyle(
+                            fontSize:
+                            36,
+                            fontWeight:
+                            FontWeight
+                                .bold,
+                          ),
+                        ),
+
+                        const SizedBox(
+                            height:
+                            8),
+
+                        const Text(
+                          "Welkom terug",
+                          textAlign:
+                          TextAlign
+                              .center,
+                          style:
+                          TextStyle(
+                            fontSize:
+                            20,
+                            color: Colors
+                                .black54,
+                          ),
+                        ),
+
+                        const SizedBox(
+                            height:
+                            34),
+
+                        _input(
+                          controller:
+                          _loginController,
+                          label:
+                          "E-mail of username",
+                        ),
+
+                        _input(
+                          controller:
+                          _passwordController,
+                          label:
+                          "Wachtwoord",
+                          obscure:
+                          _obscurePassword,
+                          suffix:
+                          IconButton(
+                            icon:
+                            Icon(
+                              _obscurePassword
+                                  ? CupertinoIcons
+                                  .eye_slash
+                                  : CupertinoIcons
+                                  .eye,
+                            ),
+                            onPressed:
+                                () {
+                              setState(
+                                      () {
+                                    _obscurePassword =
+                                    !_obscurePassword;
+                                  });
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(
+                            height:
+                            10),
+
+                        SizedBox(
+                          height:
+                          56,
+                          child:
+                          CupertinoButton(
+                            color:
+                            primaryGreen,
+                            borderRadius:
+                            BorderRadius.circular(
+                                18),
+                            onPressed:
+                            _login,
+                            child:
+                            const Text(
+                              "Inloggen",
+                              style:
+                              TextStyle(
+                                color: Colors
+                                    .white,
+                                fontWeight:
+                                FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(
+                            height:
+                            22),
+
+                        Row(
+                          mainAxisAlignment:
+                          MainAxisAlignment
+                              .center,
+                          children: [
+                            const Text(
+                              "Nog geen account?",
+                              style:
+                              TextStyle(
+                                color: Colors
+                                    .black54,
+                              ),
+                            ),
+                            CupertinoButton(
+                              padding:
+                              const EdgeInsets.only(
+                                  left:
+                                  6),
+                              onPressed:
+                              _goToRegister, minimumSize: Size(0, 0),
+                              child:
+                              const Text(
+                                "Registreren",
+                                style:
+                                TextStyle(
+                                  color:
+                                  primaryGreen,
+                                  fontWeight:
+                                  FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
