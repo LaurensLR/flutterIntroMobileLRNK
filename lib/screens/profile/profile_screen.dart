@@ -1,160 +1,212 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../auth/login_screen.dart';
 import 'profile_settings_screen.dart';
+import '../devices/my_offers_screen.dart';
+import '../reservations/my_reservations_screen.dart';
+import '../reservations/owner_reservations_screen.dart';
 
-/// Profielpagina van RentBy.
-///
-/// Toont de gebruikersinfo (naam, e-mail, lid sinds), navigatieopties
-/// voor account- en activiteitsinstellingen, en een uitlogknop.
-/// Ondersteunt zowel particuliere als bedrijfsaccounts.
+/// ======================================================
+/// PROFILE SCREEN
+/// Profielfoto upload + Firestore opslaan
+/// ======================================================
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() =>
+      _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  /// Primaire merkkleur van RentBy.
-  static const Color primaryGreen = Color(0xFF2E7D32);
+class _ProfileScreenState
+    extends State<ProfileScreen> {
+  static const Color primaryGreen =
+  Color(0xFF2E7D32);
 
-  /// De huidig ingelogde Firebase-gebruiker.
   final User? user = FirebaseAuth.instance.currentUser;
+  String userName = "Gebruiker";
+  String email = "";
 
-  /// Firestore-document van de ingelogde gebruiker.
-  DocumentSnapshot? _userDoc;
+  bool isLoading = true;
 
+  /// ======================================================
+  /// START
+  /// ======================================================
   @override
   void initState() {
     super.initState();
-    _loadUserDoc();
+    loadProfile();
   }
 
-  /// Haalt het Firestore-document van de ingelogde gebruiker op.
-  Future<void> _loadUserDoc() async {
+  /// ======================================================
+  /// FIRESTORE DATA LADEN
+  /// ======================================================
+  Future<void> loadProfile() async {
     if (user == null) return;
 
-    final doc = await FirebaseFirestore.instance
+    final doc =
+    await FirebaseFirestore.instance
         .collection("users")
         .doc(user!.uid)
         .get();
 
     if (doc.exists) {
-      setState(() => _userDoc = doc);
+      final data =
+      doc.data()!;
+
+      setState(() {
+        userName = data["firstName"] + " " + data["lastName"] ?? "Gebruiker";
+        email = user?.email ?? "";
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        email =
+            user?.email ??
+                "";
+        isLoading = false;
+      });
     }
-  }
-
-  /// Geeft de weergavenaam terug op basis van het accounttype.
-  ///
-  /// - Bedrijf → bedrijfsnaam
-  /// - Particulier → voornaam + achternaam
-  /// - Fallback → "Gebruiker"
-  String get userName {
-    if (_userDoc == null) return "Gebruiker";
-
-    final data = _userDoc!.data() as Map<String, dynamic>;
-    final isBusiness = data["isBusiness"] ?? false;
-
-    if (isBusiness) {
-      return data["companyName"] ?? "Gebruiker";
-    }
-
-    final first = data["firstName"] ?? "";
-    final last = data["lastName"] ?? "";
-    final fullName = "$first $last".trim();
-
-    return fullName.isNotEmpty ? fullName : "Gebruiker";
   }
 
   @override
-  Widget build(BuildContext context) {
-    final String email = user?.email ?? "Geen e-mail";
+  Widget build(
+      BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child:
+          CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor:
+      const Color(
+          0xFFF7F7F7),
+
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+        child:
+        SingleChildScrollView(
+          padding:
+          const EdgeInsets.all(
+              20),
+
           child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment
+                .start,
             children: [
-              // Paginatitel
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Profiel",
-                  style: TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.bold,
-                  ),
+
+              /// TITEL
+              const Text(
+                "Profiel",
+                style:
+                TextStyle(
+                  fontSize: 36,
+                  fontWeight:
+                  FontWeight.bold,
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(
+                  height: 28),
 
-              // Profielkaart met avatar, naam, e-mail en lidmaatschapsdatum
+              /// HEADER
               Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                padding:
+                const EdgeInsets.all(
+                    22),
+                decoration:
+                BoxDecoration(
+                  color:
+                  Colors.white,
+                  borderRadius:
+                  BorderRadius.circular(
+                      28),
                 ),
+
                 child: Row(
                   children: [
-                    // Circulaire avatar
+
+                    /// FOTO PICKER
                     Container(
-                      width: 74,
-                      height: 74,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE8F5E9),
+                      width: 82,
+                      height: 82,
+                      decoration: BoxDecoration(
+                        color: primaryGreen.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.person,
-                        size: 38,
+                        size: 42,
                         color: primaryGreen,
                       ),
                     ),
 
-                    const SizedBox(width: 16),
+                    const SizedBox(
+                        width: 18),
 
-                    // Naam, e-mail en lidmaatschapsdatum
+                    /// INFO
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child:
+                      Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment
+                            .start,
                         children: [
+
                           Text(
                             userName,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                            style:
+                            const TextStyle(
+                              fontSize:
+                              24,
+                              fontWeight:
+                              FontWeight.bold,
                             ),
                           ),
 
-                          const SizedBox(height: 4),
+                          const SizedBox(
+                              height:
+                              6),
 
                           Text(
                             email,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey.shade600,
+                            style:
+                            TextStyle(
+                              color: Colors
+                                  .grey
+                                  .shade600,
                             ),
                           ),
 
-                          const SizedBox(height: 6),
+                          const SizedBox(
+                              height:
+                              8),
 
-                          Text(
-                            "Lid sinds april 2026",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade500,
+                          Container(
+                            padding:
+                            const EdgeInsets.symmetric(
+                              horizontal:
+                              10,
+                              vertical:
+                              6,
+                            ),
+                            decoration:
+                            BoxDecoration(
+                              color:
+                              const Color(
+                                  0xFFF2F2F2),
+                              borderRadius:
+                              BorderRadius.circular(
+                                  30),
+                            ),
+                            child:
+                            const Text(
+                              "Lid sinds 2026",
                             ),
                           ),
                         ],
@@ -164,20 +216,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(
+                  height: 28),
 
-              // Sectie: Account
-              buildSectionTitle("Account"),
-              buildSectionCard(
+              /// ACCOUNT
+              buildSectionTitle(
+                  "Account"),
+
+              buildCard(
                 children: [
                   buildTile(
-                    icon: Icons.settings,
-                    title: "Profielinstellingen",
+                    context:
+                    context,
+                    icon:
+                    Icons.settings,
+                    title:
+                    "Profielinstellingen",
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const ProfileSettingsScreen(),
+                          builder: (_) =>
+                          const ProfileSettingsScreen(),
                         ),
                       );
                     },
@@ -185,59 +245,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(
+                  height: 24),
 
-              // Sectie: Mijn activiteit
-              buildSectionTitle("Mijn activiteit"),
-              buildSectionCard(
+              /// ACTIVITEIT
+              buildSectionTitle(
+                  "Mijn activiteit"),
+
+              buildCard(
                 children: [
+
                   buildTile(
-                    icon: Icons.sell,
-                    title: "Mijn aanbiedingen",
-                    onTap: () {},
+                    context:
+                    context,
+                    icon:
+                    Icons.sell,
+                    title:
+                    "Mijn aanbiedingen",
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                          const MyOffersScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  buildDivider(),
+
+                  divider(),
+
                   buildTile(
+                    context:
+                    context,
                     icon: Icons.sync_alt,
                     title: "Lopende verhuringen",
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                          const OwnerReservationsScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  buildDivider(),
+
+                  divider(),
+
                   buildTile(
+                    context:
+                    context,
                     icon: Icons.shopping_bag,
                     title: "Mijn reservaties",
-                    onTap: () {},
-                  ),
-                  buildDivider(),
-                  buildTile(
-                    icon: Icons.history,
-                    title: "Verhuurgeschiedenis",
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                          const MyReservationsScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(
+                  height: 30),
 
-              // Uitlogknop — meldt de gebruiker af via Firebase en keert terug
+              /// LOGOUT
               SizedBox(
-                width: double.infinity,
+                width:
+                double.infinity,
                 height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                    Navigator.pop(context);
+                child:
+                ElevatedButton(
+                  onPressed:
+                      () async {
+                    await FirebaseAuth
+                        .instance
+                        .signOut();
+
+                    Navigator.pushAndRemoveUntil(
+                      context, MaterialPageRoute(
+                        builder: (_) =>
+                        const LoginScreen(),
+                      ),
+                          (route) => false,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryGreen,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
                   ),
-                  child: const Text(
+                  child:
+                  const Text(
                     "Uitloggen",
-                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -248,75 +352,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// Bouwt een grijs sectielabel boven een [buildSectionCard].
-  ///
-  /// [title] — de weer te geven sectienaam.
+  /// ======================================================
+  /// COMPONENTEN
+  /// ======================================================
+
   Widget buildSectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(title, style:
+        TextStyle(
+          fontWeight:
+          FontWeight.bold,
+          color:
+          Colors.grey.shade600,
         ),
       ),
     );
   }
 
-  /// Bouwt een witte kaart met afgeronde hoeken en lichte schaduw
-  /// als container voor een groep [buildTile]-items.
-  ///
-  /// [children] — de lijst van tiles en dividers binnen de kaart.
-  Widget buildSectionCard({required List<Widget> children}) {
+  Widget buildCard({
+    required List<Widget>
+    children,
+  }) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      decoration:
+      BoxDecoration(
+        color:
+        Colors.white,
+        borderRadius:
+        BorderRadius.circular(24),
       ),
-      child: Column(children: children),
+      child:
+      Column(
+        children:
+        children,
+      ),
     );
   }
 
-  /// Bouwt een dunne scheidingslijn tussen tiles in een [buildSectionCard].
-  Widget buildDivider() {
-    return Divider(
-      height: 1,
-      indent: 56,
-      color: Colors.grey.shade200,
-    );
-  }
-
-  /// Bouwt een aanklikbare rij met een icoon, titel en pijl-indicator.
-  ///
-  /// [icon] — het icoon aan de linkerkant.
-  /// [title] — de weergegeven tekst.
-  /// [onTap] — callback die wordt uitgevoerd bij aantikken.
   Widget buildTile({
+    required BuildContext
+    context,
     required IconData icon,
     required String title,
-    required VoidCallback onTap,
+    required VoidCallback
+    onTap,
   }) {
-    return ListTile(
+    return InkWell(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 2,
+      hoverColor: Colors.transparent,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      focusColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Icon(icon, color: primaryGreen),
+            const SizedBox(width: 14),
+            Expanded(child: Text(title)),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
       ),
-      leading: Icon(icon, color: primaryGreen),
-      title: Text(title, style: const TextStyle(fontSize: 16)),
-      trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+    );
+  }
+
+  Widget divider() {
+    return Divider(
+      color: Colors
+          .grey.shade200,
+      height: 1,
     );
   }
 }

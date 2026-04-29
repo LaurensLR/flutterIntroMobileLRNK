@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../firebase/auth_service.dart';
+import '../../../services/auth_service.dart';
 import 'company_screen.dart';
 
 /// Registratie scherm voor RentBy

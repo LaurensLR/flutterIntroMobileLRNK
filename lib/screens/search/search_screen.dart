@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// ======================================================
-/// SEARCH SCREEN
-/// ------------------------------------------------------
-/// Zoekpagina voor RentBy.
-/// Later uitbreidbaar met:
-/// - zoeken op producten
-/// - zoeken op categorie
-/// - locatie filter
-/// - prijs filter
-/// - beschikbaarheid
+/// SEARCH SCREEN + FIREBASE
+/// Devices laden uit Firestore
 /// ======================================================
 
 class SearchScreen extends StatefulWidget {
@@ -22,12 +16,9 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState
     extends State<SearchScreen> {
-
-  /// Primaire kleur app
   static const Color primaryGreen =
   Color(0xFF2E7D32);
 
-  /// Zoekcontroller
   final searchController =
   TextEditingController();
 
@@ -40,145 +31,246 @@ class _SearchScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:
+      const Color(0xFFF7F7F7),
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+        Colors.white,
         elevation: 0,
-        centerTitle: false,
         title: const Text(
           "Zoeken",
           style: TextStyle(
             color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.black,
-        ),
-      ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-
-        child: Column(
-          children: [
-
-            /// Zoekveld
-            TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText:
-                "Zoek producten of diensten...",
-                prefixIcon:
-                const Icon(Icons.search),
-                filled: true,
-                fillColor:
-                Colors.grey.shade100,
-                border:
-                OutlineInputBorder(
-                  borderRadius:
-                  BorderRadius.circular(
-                      16),
-                  borderSide:
-                  BorderSide.none,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            /// Voorbeeld resultaten
-            Expanded(
-              child: ListView(
-                children: [
-
-                  _buildResultTile(
-                    title:
-                    "Boormachine Bosch",
-                    location:
-                    "Luik",
-                    price:
-                    "€15 / dag",
-                  ),
-
-                  _buildResultTile(
-                    title:
-                    "Aanhangwagen",
-                    location:
-                    "Brussel",
-                    price:
-                    "€35 / dag",
-                  ),
-
-                  _buildResultTile(
-                    title:
-                    "Ladder 6 meter",
-                    location:
-                    "Antwerpen",
-                    price:
-                    "€12 / dag",
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// ======================================================
-  /// RESULTAAT ITEM
-  /// ======================================================
-
-  Widget _buildResultTile({
-    required String title,
-    required String location,
-    required String price,
-  }) {
-    return Card(
-      elevation: 1,
-      margin:
-      const EdgeInsets.only(
-        bottom: 12,
-      ),
-      shape:
-      RoundedRectangleBorder(
-        borderRadius:
-        BorderRadius.circular(16),
-      ),
-
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor:
-          primaryGreen.withValues(alpha: 0.12),
-          child: const Icon(
-            Icons.inventory_2_outlined,
-            color: primaryGreen,
-          ),
-        ),
-
-        title: Text(
-          title,
-          style: const TextStyle(
             fontWeight:
             FontWeight.bold,
           ),
         ),
+      ),
 
-        subtitle: Text(
-          "$location • $price",
-        ),
+      body: ListView(
+        padding:
+        const EdgeInsets.all(16),
+        children: [
 
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-        ),
+          /// Zoekveld
+          TextField(
+            controller:
+            searchController,
+            decoration:
+            InputDecoration(
+              hintText:
+              "Zoek toestellen...",
+              prefixIcon:
+              const Icon(
+                  Icons.search),
+              filled: true,
+              fillColor:
+              Colors.white,
+              border:
+              OutlineInputBorder(
+                borderRadius:
+                BorderRadius.circular(
+                    16),
+                borderSide:
+                BorderSide.none,
+              ),
+            ),
+          ),
 
-        onTap: () {
-          /// later detailpagina openen
-        },
+          const SizedBox(height: 24),
+
+          /// Titel
+          const Text(
+            "Suggesties uit de buurt",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight:
+              FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          /// Firebase devices
+          SizedBox(
+            height: 260,
+            child:
+            StreamBuilder<
+                QuerySnapshot>(
+              stream: FirebaseFirestore
+                  .instance
+                  .collection(
+                  "devices")
+                  .orderBy(
+                "createdAt",
+                descending:
+                true,
+              )
+                  .limit(10)
+                  .snapshots(),
+
+              builder:
+                  (context,
+                  snapshot) {
+                if (snapshot
+                    .connectionState ==
+                    ConnectionState
+                        .waiting) {
+                  return const Center(
+                    child:
+                    CircularProgressIndicator(),
+                  );
+                }
+
+                if (!snapshot
+                    .hasData ||
+                    snapshot!
+                        .data!
+                        .docs
+                        .isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "Geen toestellen gevonden",
+                    ),
+                  );
+                }
+
+                final docs =
+                    snapshot
+                        .data!
+                        .docs;
+
+                return ListView.builder(
+                  scrollDirection:
+                  Axis.horizontal,
+                  itemCount:
+                  docs.length,
+                  itemBuilder:
+                      (context,
+                      index) {
+                    final data =
+                    docs[index];
+
+                    return _deviceCard(
+                      title:
+                      data[
+                      "title"],
+                      city:
+                      data[
+                      "location"],
+                      price:
+                      "€${data["pricePerDay"]}/dag",
+                      category:
+                      data[
+                      "category"],
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ==========================
+  /// DEVICE CARD
+  /// ==========================
+  Widget _deviceCard({
+    required String title,
+    required String city,
+    required String price,
+    required String category,
+  }) {
+    return Container(
+      width: 180,
+      margin:
+      const EdgeInsets.only(right: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+
+      child: Column(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+
+          Container(
+            height: 90,
+            decoration:
+            BoxDecoration(
+              color:
+              primaryGreen.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child:
+            const Center(
+              child: Icon(
+                Icons.inventory_2_outlined,
+                size: 42,
+                color: primaryGreen,
+              ),
+            ),
+          ),
+
+          const SizedBox(
+              height: 12),
+
+          Text(
+            title,
+            maxLines: 1,
+            overflow:
+            TextOverflow
+                .ellipsis,
+            style:
+            const TextStyle(
+              fontWeight:
+              FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            category,
+            style: TextStyle(color: Colors.grey.shade600,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            city,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+            ),
+          ),
+
+          const Spacer(),
+
+          Text(
+            price,
+            style:
+            const TextStyle(
+              color: primaryGreen,
+              fontWeight:
+              FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'register/register_screen.dart';
-import '../../firebase/auth_service.dart';
+import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
 
 /// RentBy Login Screen
