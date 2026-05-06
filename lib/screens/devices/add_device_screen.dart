@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/device_service.dart';
+import '../../services/image_upload_service.dart';
+import '../../widgets/image_picker_card.dart';
 
 /// ======================================================
 /// TOESTEL AANBIEDEN SCREEN
@@ -11,18 +13,13 @@ class AddDeviceScreen extends StatefulWidget {
   const AddDeviceScreen({super.key});
 
   @override
-  State<AddDeviceScreen> createState() =>
-      _AddDeviceScreenState();
+  State<AddDeviceScreen> createState() => _AddDeviceScreenState();
 }
 
-class _AddDeviceScreenState
-    extends State<AddDeviceScreen> {
+class _AddDeviceScreenState extends State<AddDeviceScreen> {
+  static const Color primaryGreen = Color(0xFF2E7D32);
 
-  static const Color primaryGreen =
-  Color(0xFF2E7D32);
-
-  static const List<String>
-  categories = [
+  static const List<String> categories = [
     "Stofzuiger",
     "Grasmaaier",
     "Keukenmachine",
@@ -31,35 +28,21 @@ class _AddDeviceScreenState
     "Overig",
   ];
 
-  final GlobalKey<FormState>
-  formKey =
-  GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  final TextEditingController
-  titleController =
-  TextEditingController();
+  final TextEditingController titleController = TextEditingController();
 
-  final TextEditingController
-  descriptionController =
-  TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
 
-  final TextEditingController
-  priceController =
-  TextEditingController();
+  final TextEditingController priceController = TextEditingController();
 
-  final TextEditingController
-  locationController =
-  TextEditingController();
+  final TextEditingController locationController = TextEditingController();
 
-  final TextEditingController
-  imageController =
-  TextEditingController();
+  dynamic selectedImage;
 
-  String selectedCategory =
-      categories.first;
+  String selectedCategory = categories.first;
 
-  DateTimeRange?
-  availabilityRange;
+  DateTimeRange? availabilityRange;
 
   bool isSaving = false;
 
@@ -69,7 +52,6 @@ class _AddDeviceScreenState
     descriptionController.dispose();
     priceController.dispose();
     locationController.dispose();
-    imageController.dispose();
     super.dispose();
   }
 
@@ -77,33 +59,19 @@ class _AddDeviceScreenState
   /// INPUT STYLING
   /// --------------------------------------------------
 
-  InputDecoration inputStyle(
-      String label,
-      IconData icon) {
+  InputDecoration inputStyle(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon),
       filled: true,
       fillColor: Colors.white,
-      border:
-      OutlineInputBorder(
-        borderRadius:
-        BorderRadius.circular(
-            18),
-        borderSide:
-        BorderSide.none,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide.none,
       ),
-      focusedBorder:
-      OutlineInputBorder(
-        borderRadius:
-        BorderRadius.circular(
-            18),
-        borderSide:
-        const BorderSide(
-          color:
-          primaryGreen,
-          width: 2,
-        ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: primaryGreen, width: 2),
       ),
     );
   }
@@ -112,22 +80,16 @@ class _AddDeviceScreenState
   /// DATUM FORMATTEREN
   /// --------------------------------------------------
 
-  String formatDate(
-      DateTime date) {
-    final day =
-    date.day.toString()
-        .padLeft(2, '0');
+  String formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
 
-    final month =
-    date.month.toString()
-        .padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
 
     return "$day/$month/${date.year}";
   }
 
   String availabilityLabel() {
-    if (availabilityRange ==
-        null) {
+    if (availabilityRange == null) {
       return "Kies periode";
     }
 
@@ -138,28 +100,20 @@ class _AddDeviceScreenState
   /// PERIODE KIEZEN
   /// --------------------------------------------------
 
-  Future<void>
-  pickAvailability() async {
-    final now =
-    DateTime.now();
+  Future<void> pickAvailability() async {
+    final now = DateTime.now();
 
-    final picked =
-    await showDateRangePicker(
+    final picked = await showDateRangePicker(
       context: context,
       firstDate: now,
-      lastDate:
-      DateTime(
-          now.year + 2),
-      initialDateRange:
-      availabilityRange,
-      helpText:
-      "Beschikbaarheid",
+      lastDate: DateTime(now.year + 2),
+      initialDateRange: availabilityRange,
+      helpText: "Beschikbaarheid",
     );
 
     if (picked != null) {
       setState(() {
-        availabilityRange =
-            picked;
+        availabilityRange = picked;
       });
     }
   }
@@ -169,38 +123,24 @@ class _AddDeviceScreenState
   /// --------------------------------------------------
 
   Future<void> submit() async {
-    final user =
-        FirebaseAuth.instance
-            .currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) return;
 
-    if (!formKey.currentState!
-        .validate()) {
+    if (!formKey.currentState!.validate()) {
       return;
     }
 
-    if (availabilityRange ==
-        null) {
+    if (availabilityRange == null) {
       ScaffoldMessenger.of(
-          context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-              "Kies beschikbaarheid"),
-        ),
-      );
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Kies beschikbaarheid")));
       return;
     }
 
-    final price =
-    double.tryParse(
-      priceController.text
-          .replaceAll(',', '.'),
-    );
+    final price = double.tryParse(priceController.text.replaceAll(',', '.'));
 
-    if (price == null ||
-        price <= 0) {
+    if (price == null || price <= 0) {
       return;
     }
 
@@ -209,55 +149,46 @@ class _AddDeviceScreenState
     });
 
     try {
-      await DeviceService()
-          .addDevice(
+      if (selectedImage == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Kies eerst een foto")));
+        setState(() {
+          isSaving = false;
+        });
+        return;
+      }
+
+      final bytes = await (selectedImage as dynamic).readAsBytes();
+      final imageUrl = await ImageUploadService().uploadImageBytes(
+        bytes: bytes,
+        folder: "devices",
+        userId: user.uid,
+      );
+
+      await DeviceService().addDevice(
         ownerId: user.uid,
-        title:
-        titleController.text
-            .trim(),
-        description:
-        descriptionController
-            .text
-            .trim(),
-        category:
-        selectedCategory,
+        title: titleController.text.trim(),
+        description: descriptionController.text.trim(),
+        category: selectedCategory,
         pricePerDay: price,
-        location:
-        locationController
-            .text
-            .trim(),
-        imageUrl:
-        imageController.text
-            .trim(),
-        availableFrom:
-        availabilityRange!
-            .start,
-        availableTo:
-        availabilityRange!
-            .end,
+        location: locationController.text.trim(),
+        imageUrl: imageUrl,
+        availableFrom: availabilityRange!.start,
+        availableTo: availabilityRange!.end,
       );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(
-          context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text(
-              "Toestel toegevoegd"),
-        ),
-      );
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Toestel toegevoegd")));
 
       Navigator.pop(context);
-    } catch (_) {
+    } catch (e) {
       ScaffoldMessenger.of(
-          context)
-          .showSnackBar(
-        const SnackBar(
-          content:
-          Text("Fout"),
-        ),
-      );
+        context,
+      ).showSnackBar(SnackBar(content: Text("Fout: $e")));
     }
 
     setState(() {
@@ -266,257 +197,149 @@ class _AddDeviceScreenState
   }
 
   @override
-  Widget build(
-      BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-      const Color(
-          0xFFF7F7F7),
+      backgroundColor: const Color(0xFFF7F7F7),
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor:
-        const Color(
-            0xFFF7F7F7),
-        foregroundColor:
-        Colors.black,
+        backgroundColor: const Color(0xFFF7F7F7),
+        foregroundColor: Colors.black,
         title: const Text(
           "Toestel aanbieden",
-          style: TextStyle(
-            fontWeight:
-            FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
-      body:
-      SingleChildScrollView(
-        padding:
-        const EdgeInsets.all(
-            20),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
 
         child: Form(
           key: formKey,
 
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment
-                .stretch,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
 
             children: [
+              Center(
+                child: ImagePickerCard(
+                  onImageSelected: (file) {
+                    setState(() {
+                      selectedImage = file;
+                    });
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
 
               const Text(
                 "Vul de gegevens van je toestel in",
-                style:
-                TextStyle(
-                  fontSize: 24,
-                  fontWeight:
-                  FontWeight
-                      .bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
 
-              const SizedBox(
-                  height: 24),
+              const SizedBox(height: 24),
 
               TextFormField(
-                controller:
-                titleController,
-                decoration:
-                inputStyle(
-                  "Naam toestel",
-                  Icons
-                      .devices_outlined,
-                ),
-                validator:
-                    (value) =>
-                value == null ||
-                    value
-                        .trim()
-                        .isEmpty
-                    ? "Verplicht"
-                    : null,
+                controller: titleController,
+                decoration: inputStyle("Naam toestel", Icons.devices_outlined),
+                validator: (value) =>
+                    value == null || value.trim().isEmpty ? "Verplicht" : null,
               ),
 
-              const SizedBox(
-                  height: 16),
+              const SizedBox(height: 16),
 
               TextFormField(
-                controller:
-                descriptionController,
+                controller: descriptionController,
                 maxLines: 4,
-                decoration:
-                inputStyle(
+                decoration: inputStyle(
                   "Beschrijving",
-                  Icons
-                      .description_outlined,
+                  Icons.description_outlined,
                 ),
               ),
 
-              const SizedBox(
-                  height: 16),
+              const SizedBox(height: 16),
 
-              DropdownButtonFormField<
-                  String>(
-                value:
-                selectedCategory,
-                decoration:
-                inputStyle(
-                  "Categorie",
-                  Icons
-                      .category_outlined,
-                ),
+              DropdownButtonFormField<String>(
+                initialValue: selectedCategory,
+                decoration: inputStyle("Categorie", Icons.category_outlined),
                 items: categories
                     .map(
                       (item) =>
-                      DropdownMenuItem(
-                        value:
-                        item,
-                        child:
-                        Text(
-                          item,
-                        ),
-                      ),
-                )
+                          DropdownMenuItem(value: item, child: Text(item)),
+                    )
                     .toList(),
-                onChanged:
-                    (value) {
-                  if (value ==
-                      null) {
+                onChanged: (value) {
+                  if (value == null) {
                     return;
                   }
 
                   setState(() {
-                    selectedCategory =
-                        value;
+                    selectedCategory = value;
                   });
                 },
               ),
 
-              const SizedBox(
-                  height: 16),
+              const SizedBox(height: 16),
 
               TextFormField(
-                controller:
-                priceController,
-                keyboardType:
-                TextInputType
-                    .number,
-                decoration:
-                inputStyle(
-                  "Prijs per dag",
-                  Icons
-                      .euro_symbol,
-                ),
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                decoration: inputStyle("Prijs per dag", Icons.euro_symbol),
               ),
 
-              const SizedBox(
-                  height: 16),
+              const SizedBox(height: 16),
 
               TextFormField(
-                controller:
-                locationController,
-                decoration:
-                inputStyle(
-                  "Locatie",
-                  Icons
-                      .place_outlined,
-                ),
+                controller: locationController,
+                decoration: inputStyle("Locatie", Icons.place_outlined),
               ),
 
-              const SizedBox(
-                  height: 16),
-
-              TextFormField(
-                controller:
-                imageController,
-                decoration:
-                inputStyle(
-                  "Foto pad",
-                  Icons
-                      .image_outlined,
-                ),
-              ),
-
-              const SizedBox(
-                  height: 16),
+              const SizedBox(height: 16),
 
               InkWell(
-                onTap:
-                pickAvailability,
-                borderRadius:
-                BorderRadius.circular(
-                    18),
+                onTap: pickAvailability,
+                borderRadius: BorderRadius.circular(18),
 
-                child:
-                InputDecorator(
-                  decoration:
-                  inputStyle(
-                    "Beschikbaarheid",
-                    Icons
-                        .date_range,
-                  ),
-                  child: Text(
-                    availabilityLabel(),
-                  ),
+                child: InputDecorator(
+                  decoration: inputStyle("Beschikbaarheid", Icons.date_range),
+                  child: Text(availabilityLabel()),
                 ),
               ),
 
-              const SizedBox(
-                  height: 28),
+              const SizedBox(height: 28),
 
               SizedBox(
                 height: 56,
 
-                child:
-                ElevatedButton(
-                  onPressed:
-                  isSaving
-                      ? null
-                      : submit,
+                child: ElevatedButton(
+                  onPressed: isSaving ? null : submit,
 
-                  style:
-                  ElevatedButton
-                      .styleFrom(
-                    backgroundColor:
-                    primaryGreen,
-                    foregroundColor:
-                    Colors
-                        .white,
-                    elevation:
-                    0,
-                    shape:
-                    RoundedRectangleBorder(
-                      borderRadius:
-                      BorderRadius.circular(
-                          18),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
 
                   child: isSaving
                       ? const SizedBox(
-                    width:
-                    22,
-                    height:
-                    22,
-                    child:
-                    CircularProgressIndicator(
-                      color:
-                      Colors.white,
-                      strokeWidth:
-                      2,
-                    ),
-                  )
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Text(
-                    "Toestel toevoegen",
-                    style:
-                    TextStyle(
-                      fontSize:
-                      17,
-                      fontWeight:
-                      FontWeight.w600,
-                    ),
-                  ),
+                          "Toestel toevoegen",
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],

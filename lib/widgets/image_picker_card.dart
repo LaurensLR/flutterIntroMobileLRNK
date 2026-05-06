@@ -4,7 +4,6 @@
 // ======================================================
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart'; // 👈 voor kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,8 +26,8 @@ class _ImagePickerCardState extends State<ImagePickerCard> {
   static const Color primaryGreen = Color(0xFF2E7D32);
   final ImagePicker picker = ImagePicker();
 
-  File? selectedImage;        // mobiel
-  Uint8List? selectedBytes;   // web
+  File? selectedImage; // mobiel
+  Uint8List? selectedBytes; // web
 
   Future<void> pickImage() async {
     final XFile? image = await picker.pickImage(
@@ -45,16 +44,8 @@ class _ImagePickerCardState extends State<ImagePickerCard> {
     } else {
       final file = File(image.path);
       setState(() => selectedImage = file);
-      widget.onImageSelected(file);  // File doorgeven op mobiel
+      widget.onImageSelected(file); // File doorgeven op mobiel
     }
-
-    final file = File(image.path);
-
-    setState(() {
-      selectedImage = file;
-    });
-
-    widget.onImageSelected(file);
   }
 
   // --------------------------------------------------
@@ -64,6 +55,7 @@ class _ImagePickerCardState extends State<ImagePickerCard> {
   void removeImage() {
     setState(() {
       selectedImage = null;
+      selectedBytes = null;
     });
   }
 
@@ -77,21 +69,20 @@ class _ImagePickerCardState extends State<ImagePickerCard> {
       onTap: pickImage,
       child: Stack(
         children: [
-
           /// RONDE FOTO
           CircleAvatar(
             radius: 44,
             backgroundImage: kIsWeb
                 ? (selectedBytes != null
-                ? MemoryImage(selectedBytes!) as ImageProvider
-                : widget.imageUrl.isNotEmpty
-                ? NetworkImage(widget.imageUrl)
-                : null)
+                      ? MemoryImage(selectedBytes!) as ImageProvider
+                      : widget.imageUrl.isNotEmpty
+                      ? NetworkImage(widget.imageUrl)
+                      : null)
                 : (selectedImage != null
-                ? FileImage(selectedImage!) as ImageProvider
-                : widget.imageUrl.isNotEmpty
-                ? NetworkImage(widget.imageUrl)
-                : null),
+                      ? FileImage(selectedImage!) as ImageProvider
+                      : widget.imageUrl.isNotEmpty
+                      ? NetworkImage(widget.imageUrl)
+                      : null),
           ),
 
           /// CAMERA ICOONTJE
@@ -105,7 +96,11 @@ class _ImagePickerCardState extends State<ImagePickerCard> {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
-              child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+              child: const Icon(
+                Icons.camera_alt,
+                size: 14,
+                color: Colors.white,
+              ),
             ),
           ),
         ],

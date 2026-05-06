@@ -12,8 +12,7 @@ import 'add_device_screen.dart';
 class MyOffersScreen extends StatelessWidget {
   const MyOffersScreen({super.key});
 
-  static const Color primaryGreen =
-  Color(0xFF2E7D32);
+  static const Color primaryGreen = Color(0xFF2E7D32);
 
   /// --------------------------------------------------
   /// PRIJS LEZEN
@@ -46,11 +45,9 @@ class MyOffersScreen extends StatelessWidget {
       return "Onbekend";
     }
 
-    final day =
-    date.day.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
 
-    final month =
-    date.month.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
 
     return "$day/$month/${date.year}";
   }
@@ -59,16 +56,12 @@ class MyOffersScreen extends StatelessWidget {
   /// LEGE / FOUT STATUS
   /// --------------------------------------------------
 
-  Widget _buildStateMessage(
-      String message) {
+  Widget _buildStateMessage(String message) {
     return Center(
       child: Text(
         message,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.black54,
-        ),
+        style: const TextStyle(fontSize: 16, color: Colors.black54),
       ),
     );
   }
@@ -77,18 +70,14 @@ class MyOffersScreen extends StatelessWidget {
   /// AFBEELDING TOESTEL
   /// --------------------------------------------------
 
-  Widget _buildDeviceImage(
-      String imageUrl) {
+  Widget _buildDeviceImage(String imageUrl) {
     if (imageUrl.isEmpty) {
       return Container(
         width: 74,
         height: 74,
         decoration: BoxDecoration(
-          color:
-          const Color(0xFFEAF3EB),
-          borderRadius:
-          BorderRadius.circular(
-              18),
+          color: const Color(0xFFEAF3EB),
+          borderRadius: BorderRadius.circular(18),
         ),
         child: const Icon(
           Icons.inventory_2_outlined,
@@ -98,26 +87,30 @@ class MyOffersScreen extends StatelessWidget {
       );
     }
 
-    final isAsset =
-    imageUrl.startsWith(
-        "assets/");
+    final isAsset = imageUrl.startsWith("assets/");
 
     return ClipRRect(
-      borderRadius:
-      BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(18),
       child: isAsset
-          ? Image.asset(
-        imageUrl,
-        width: 74,
-        height: 74,
-        fit: BoxFit.cover,
-      )
+          ? Image.asset(imageUrl, width: 74, height: 74, fit: BoxFit.cover)
           : Image.network(
-        imageUrl,
-        width: 74,
-        height: 74,
-        fit: BoxFit.cover,
-      ),
+              imageUrl,
+              width: 74,
+              height: 74,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 74,
+                  height: 74,
+                  color: const Color(0xFFEAF3EB),
+                  child: const Icon(
+                    Icons.broken_image_outlined,
+                    color: primaryGreen,
+                    size: 28,
+                  ),
+                );
+              },
+            ),
     );
   }
 
@@ -125,183 +118,118 @@ class MyOffersScreen extends StatelessWidget {
   /// DEVICE CARD
   /// --------------------------------------------------
 
-  Widget _buildDeviceCard(
-      Map<String, dynamic> data) {
-    final title =
-    (data["title"] ??
-        "Onbekend toestel")
-        .toString();
+  Widget _buildDeviceCard(Map<String, dynamic> data) {
+    final title = (data["title"] ?? "Onbekend toestel").toString();
 
-    final description =
-    (data["description"] ??
-        "")
-        .toString();
+    final description = (data["description"] ?? "").toString();
 
-    final category =
-    (data["category"] ??
-        "Onbekend")
-        .toString();
+    final category = (data["category"] ?? "Onbekend").toString();
 
-    final location =
-    (data["location"] ?? "")
-        .toString();
+    final location = (data["location"] ?? "").toString();
 
-    final imageUrl =
-    (data["imageUrl"] ?? "")
-        .toString();
+    final imageUrl = (data["imageUrl"] ?? "").toString();
 
-    final price =
-    _readPrice(
-        data["pricePerDay"]);
+    final price = _readPrice(data["pricePerDay"]);
 
-    final availableFrom =
-    _readDate(
-        data["availableFrom"]);
+    final availableFrom = _readDate(data["availableFrom"]);
 
-    final availableTo =
-    _readDate(
-        data["availableTo"]);
+    final availableTo = _readDate(data["availableTo"]);
 
     final availability =
         "${_formatDate(availableFrom)} - ${_formatDate(availableTo)}";
 
     return Container(
-      margin:
-      const EdgeInsets.only(
-        bottom: 14,
-      ),
+      margin: const EdgeInsets.only(bottom: 14),
 
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(
-            24),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black
-                .withValues(
-                alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 18,
-            offset:
-            const Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
 
       child: Padding(
-        padding:
-        const EdgeInsets.all(
-            16),
+        padding: const EdgeInsets.all(16),
 
         child: Row(
-          crossAxisAlignment:
-          CrossAxisAlignment
-              .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
+            _buildDeviceImage(imageUrl),
 
-            _buildDeviceImage(
-                imageUrl),
-
-            const SizedBox(
-                width: 14),
+            const SizedBox(width: 14),
 
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   Text(
                     title,
-                    style:
-                    const TextStyle(
-                      fontSize:
-                      17,
-                      fontWeight:
-                      FontWeight
-                          .bold,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(
-                      height: 4),
+                  const SizedBox(height: 4),
 
                   Text(
                     category,
-                    style:
-                    const TextStyle(
-                      color: Colors
-                          .black54,
-                    ),
+                    style: const TextStyle(color: Colors.black54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
-                  if (description
-                      .isNotEmpty)
+                  if (description.isNotEmpty)
                     Padding(
-                      padding:
-                      const EdgeInsets.only(
-                          top:
-                          6),
+                      padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         description,
                         maxLines: 2,
-                        overflow:
-                        TextOverflow
-                            .ellipsis,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
 
-                  const SizedBox(
-                      height: 8),
+                  const SizedBox(height: 8),
 
                   Text(
                     "Beschikbaar: $availability",
-                    style:
-                    const TextStyle(
-                      fontSize:
-                      13,
-                      color: Colors
-                          .black54,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
-                  if (location
-                      .isNotEmpty)
+                  if (location.isNotEmpty)
                     Padding(
-                      padding:
-                      const EdgeInsets.only(
-                          top:
-                          4),
+                      padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         "Locatie: $location",
-                        style:
-                        const TextStyle(
-                          fontSize:
-                          13,
-                          color: Colors
-                              .black54,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
 
-                  const SizedBox(
-                      height: 4),
+                  const SizedBox(height: 4),
 
                   Text(
                     price == null
                         ? "Prijs onbekend"
                         : "€ ${price.toStringAsFixed(2)} / dag",
-                    style:
-                    const TextStyle(
-                      fontSize:
-                      13,
-                      color:
-                      primaryGreen,
-                      fontWeight:
-                      FontWeight
-                          .w600,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: primaryGreen,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -314,120 +242,71 @@ class MyOffersScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(
-      BuildContext context) {
-    final user =
-        FirebaseAuth.instance
-            .currentUser;
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
       return Scaffold(
-        backgroundColor:
-        Colors.white,
+        backgroundColor: Colors.white,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor:
-          Colors.white,
-          foregroundColor:
-          Colors.black,
-          title: const Text(
-            "Mijn aanbiedingen",
-          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          title: const Text("Mijn aanbiedingen"),
         ),
-        body: _buildStateMessage(
-          "Log in om je aanbiedingen te zien.",
-        ),
+        body: _buildStateMessage("Log in om je aanbiedingen te zien."),
       );
     }
 
     return Scaffold(
-      backgroundColor:
-      const Color(0xFFF7F7F7),
+      backgroundColor: const Color(0xFFF7F7F7),
 
       appBar: AppBar(
         elevation: 0,
-        backgroundColor:
-        const Color(0xFFF7F7F7),
-        foregroundColor:
-        Colors.black,
+        backgroundColor: const Color(0xFFF7F7F7),
+        foregroundColor: Colors.black,
         title: const Text(
           "Mijn aanbiedingen",
-          style: TextStyle(
-            fontWeight:
-            FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
-      floatingActionButton:
-      FloatingActionButton(
-        backgroundColor:
-        primaryGreen,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: primaryGreen,
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) =>
-              const AddDeviceScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const AddDeviceScreen()),
           );
         },
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
 
-      body: StreamBuilder<
-          QuerySnapshot<
-              Map<String, dynamic>>>(
-        stream: DeviceService()
-            .streamOwnerDevices(
-            user.uid),
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: DeviceService().streamOwnerDevices(user.uid),
 
-        builder:
-            (context, snapshot) {
-
-          if (snapshot
-              .connectionState ==
-              ConnectionState
-                  .waiting) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child:
-              CircularProgressIndicator(
-                color:
-                primaryGreen,
-              ),
+              child: CircularProgressIndicator(color: primaryGreen),
             );
           }
 
           if (snapshot.hasError) {
-            return _buildStateMessage(
-              "Fout bij laden van aanbiedingen.",
-            );
+            return _buildStateMessage("Fout bij laden van aanbiedingen.");
           }
 
-          final docs =
-              snapshot.data?.docs ??
-                  [];
+          final docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
-            return _buildStateMessage(
-              "Nog geen aanbiedingen.",
-            );
+            return _buildStateMessage("Nog geen aanbiedingen.");
           }
 
           return ListView.builder(
-            padding:
-            const EdgeInsets.all(
-                20),
-            itemCount:
-            docs.length,
-            itemBuilder:
-                (context, index) {
-              return _buildDeviceCard(
-                docs[index].data(),
-              );
+            padding: const EdgeInsets.all(20),
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              return _buildDeviceCard(docs[index].data());
             },
           );
         },
