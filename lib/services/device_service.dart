@@ -14,6 +14,8 @@ class DeviceService {
     required DateTime availableTo,
     String? imageUrl,
     String? location,
+    double? locationLat,
+    double? locationLng,
   }) {
     return _devices.add({
       'ownerId': ownerId,
@@ -23,6 +25,8 @@ class DeviceService {
       'pricePerDay': pricePerDay,
       'imageUrl': imageUrl ?? '',
       'location': location ?? '',
+      'locationLat': locationLat,
+      'locationLng': locationLng,
       'availableFrom': Timestamp.fromDate(availableFrom),
       'availableTo': Timestamp.fromDate(availableTo),
       'createdAt': FieldValue.serverTimestamp(),
@@ -33,5 +37,9 @@ class DeviceService {
     String ownerId,
   ) {
     return _devices.where('ownerId', isEqualTo: ownerId).snapshots();
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamAllDevices() {
+    return _devices.orderBy('createdAt', descending: true).snapshots();
   }
 }
