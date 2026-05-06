@@ -15,6 +15,22 @@ Gebruikers kunnen bestaande reviews bekijken in een overzicht.
 Bestand:
 - `ratings_screen.dart`
 
+
+### Locatie kiezen
+Gebruikers kunnen een locatie kiezen via Google Maps bij het aanbieden van een toestel.
+
+Bestand:
+- `add_device_screen.dart`
+- `map_picker_screen.dart`
+
+
+### Filteren en zoeken
+Gebruikers kunnen toestellen zoeken en filteren op categorie, prijs, afstand en beschikbaarheid.
+
+Bestand:
+- `search_screen.dart`
+- `geo.dart`
+
 ## Screenshots
 
 - het overzicht van reviews

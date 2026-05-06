@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/device_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../widgets/image_picker_card.dart';
+import 'map_picker_screen.dart';
 
 /// ======================================================
 /// TOESTEL AANBIEDEN SCREEN
@@ -37,6 +38,9 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
   final TextEditingController priceController = TextEditingController();
 
   final TextEditingController locationController = TextEditingController();
+
+  double? locationLat;
+  double? locationLng;
 
   dynamic selectedImage;
 
@@ -173,6 +177,8 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
         category: selectedCategory,
         pricePerDay: price,
         location: locationController.text.trim(),
+        locationLat: locationLat,
+        locationLng: locationLng,
         imageUrl: imageUrl,
         availableFrom: availabilityRange!.start,
         availableTo: availabilityRange!.end,
@@ -290,9 +296,46 @@ class _AddDeviceScreenState extends State<AddDeviceScreen> {
 
               const SizedBox(height: 16),
 
-              TextFormField(
-                controller: locationController,
-                decoration: inputStyle("Locatie", Icons.place_outlined),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: locationController,
+                      decoration: inputStyle("Locatie", Icons.place_outlined),
+                      readOnly: true,
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MapPickerScreen(),
+                        ),
+                      );
+
+                      if (result != null && result is Map) {
+                        setState(() {
+                          locationController.text = result['address'] ?? '';
+                          locationLat = (result['lat'] as num).toDouble();
+                          locationLng = (result['lng'] as num).toDouble();
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.map_outlined),
+                    label: const Text('Kies op kaart'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryGreen,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 16),
