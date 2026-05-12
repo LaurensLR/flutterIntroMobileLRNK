@@ -1,7 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class RateScreen extends StatefulWidget {
-  const RateScreen({super.key});
+
+  final String deviceId;
+  final String ownerId;
+  final String reviewerId;
+
+  const RateScreen({
+    super.key,
+    required this.deviceId,
+    required this.ownerId,
+    required this.reviewerId,
+  });
 
   @override
   State<RateScreen> createState() => _RateScreenState();
@@ -13,6 +24,62 @@ class _RateScreenState extends State<RateScreen> {
   TextEditingController();
 
   static const Color accent = Color(0xFF2E7D32);
+
+  Future<void> onPost() async {
+
+    final comment =
+    commentController.text.trim();
+
+    if (rating == 0) {
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Selecteer een rating",
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    try {
+
+      await FirebaseFirestore.instance
+          .collection('reviews')
+          .add({
+        'deviceId': widget.deviceId,
+        'ownerId': widget.ownerId,
+        'reviewerId': widget.reviewerId,
+        'rating': rating,
+        'comment': comment,
+        'createdAt':
+        FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Review geplaatst!",
+          ),
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            "Fout: $e",
+          ),
+        ),
+      );
+    }
+  }
 
   /// ⭐ STAR
   Widget buildStar(int index) {
@@ -34,27 +101,6 @@ class _RateScreenState extends State<RateScreen> {
         ),
       ),
     );
-  }
-
-  /// 🚀 POST
-  void onPost() {
-    final comment =
-    commentController.text.trim();
-
-    if (rating == 0) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content: Text("Selecteer een rating"),
-        ),
-      );
-      return;
-    }
-
-    print("Rating: $rating");
-    print("Comment: $comment");
-
-    Navigator.pop(context);
   }
 
   @override

@@ -4,11 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/reservation_service.dart';
 import 'reservation_detail_screen.dart';
 
-/// ======================================================
-/// MIJN RESERVATIES SCREEN
-/// Apple / iOS geïnspireerde stijl
-/// ======================================================
-
 class MyReservationsScreen extends StatelessWidget {
   const MyReservationsScreen({super.key});
 
@@ -398,9 +393,13 @@ class MyReservationsScreen extends StatelessWidget {
             docs.length,
             itemBuilder:
                 (context, index) {
+              final doc = docs[index];
+              final reservation =
+              doc.data();
+              reservation['id'] = doc.id;
               return _buildReservationCard(
                 context,
-                docs[index].data(),
+                reservation,
               );
             },
           );

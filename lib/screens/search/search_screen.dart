@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/geo.dart';
+import '../devices/device_detail_screen.dart';
 import '../devices/map_picker_screen.dart';
 import '../../services/device_service.dart';
+import '../../models/device_model.dart';
 
 /// ======================================================
 /// SEARCH SCREEN + FIREBASE
@@ -335,8 +337,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: filtered.length,
+
                   itemBuilder: (context, index) {
-                    final data = filtered[index].data();
+                    final doc = filtered[index];
+                    final data = doc.data();
+
 
                     return _deviceCard(
                       title: data["title"],
@@ -344,6 +349,16 @@ class _SearchScreenState extends State<SearchScreen> {
                       price: "€${data["pricePerDay"]}/dag",
                       category: data["category"],
                       imageUrl: (data["imageUrl"] ?? '').toString(),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DeviceDetailScreen(
+                              device: DeviceModel.fromFirestore(doc), // ← parsed model
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
@@ -364,6 +379,7 @@ class _SearchScreenState extends State<SearchScreen> {
     required String price,
     required String category,
     required String imageUrl,
+    required VoidCallback onTap,
   }) {
     Widget imageWidget;
 
@@ -419,56 +435,50 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+    return GestureDetector(
+      onTap: onTap,
+        child:  Container(
+          width: 180,
+          margin: const EdgeInsets.only(right: 14),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          imageWidget,
-
-          const SizedBox(height: 12),
-
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              imageWidget,
+              const SizedBox(height: 12),
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(category, style: TextStyle(color: Colors.grey.shade600)),
+              const SizedBox(height: 4),
+              Text(city, style: TextStyle(color: Colors.grey.shade600)),
+              const Spacer(),
+              Text(
+                price,
+                style: const TextStyle(
+                  color: primaryGreen,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 4),
-
-          Text(category, style: TextStyle(color: Colors.grey.shade600)),
-
-          const SizedBox(height: 4),
-
-          Text(city, style: TextStyle(color: Colors.grey.shade600)),
-
-          const Spacer(),
-
-          Text(
-            price,
-            style: const TextStyle(
-              color: primaryGreen,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
+        )
     );
   }
 }
