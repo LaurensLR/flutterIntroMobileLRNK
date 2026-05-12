@@ -85,13 +85,18 @@ class _SearchScreenState extends State<SearchScreen> {
           // Filters card
           Card(
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Filters', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Filters',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
 
                   // Category placeholder - static categories for now
@@ -100,14 +105,34 @@ class _SearchScreenState extends State<SearchScreen> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           initialValue: selectedCategory,
-                          items: ['Alle','Stofzuiger','Grasmaaier','Keukenmachine','Gereedschap','Tuin','Overig']
-                              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                              .toList(),
+                          items:
+                              [
+                                    'Alle',
+                                    'Stofzuiger',
+                                    'Grasmaaier',
+                                    'Keukenmachine',
+                                    'Gereedschap',
+                                    'Tuin',
+                                    'Overig',
+                                  ]
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(e),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged: (v) {
                             if (v == null) return;
-                            setState(() { selectedCategory = v; });
+                            setState(() {
+                              selectedCategory = v;
+                            });
                           },
-                          decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ),
 
@@ -116,7 +141,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       // Radius / map picker
                       ElevatedButton.icon(
                         onPressed: () async {
-                          final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const MapPickerScreen()));
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MapPickerScreen(),
+                            ),
+                          );
                           if (result != null && result is Map) {
                             setState(() {
                               centerLat = (result['lat'] as num).toDouble();
@@ -142,7 +172,9 @@ class _SearchScreenState extends State<SearchScreen> {
                           max: 100,
                           divisions: 20,
                           label: "${radiusKm.toStringAsFixed(0)} km",
-                          onChanged: (v) => setState(() { radiusKm = v; }),
+                          onChanged: (v) => setState(() {
+                            radiusKm = v;
+                          }),
                         ),
                       ),
                     ],
@@ -152,7 +184,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
                   Row(
                     children: [
-                      Expanded(child: Text('Max prijs: €${maxPrice.toStringAsFixed(0)}')),
+                      Expanded(
+                        child: Text(
+                          'Max prijs: €${maxPrice.toStringAsFixed(0)}',
+                        ),
+                      ),
                       SizedBox(
                         width: 140,
                         child: Slider(
@@ -160,7 +196,9 @@ class _SearchScreenState extends State<SearchScreen> {
                           min: 0,
                           max: 500,
                           divisions: 50,
-                          onChanged: (v) => setState(() { maxPrice = v; }),
+                          onChanged: (v) => setState(() {
+                            maxPrice = v;
+                          }),
                         ),
                       ),
                     ],
@@ -173,8 +211,15 @@ class _SearchScreenState extends State<SearchScreen> {
                       ElevatedButton.icon(
                         onPressed: () async {
                           final now = DateTime.now();
-                          final picked = await showDateRangePicker(context: context, firstDate: now, lastDate: DateTime(now.year+2));
-                          if (picked != null) setState(() { desiredRange = picked; });
+                          final picked = await showDateRangePicker(
+                            context: context,
+                            firstDate: now,
+                            lastDate: DateTime(now.year + 2),
+                          );
+                          if (picked != null)
+                            setState(() {
+                              desiredRange = picked;
+                            });
                         },
                         icon: const Icon(Icons.date_range),
                         label: const Text('Beschikbaarheid kiezen'),
@@ -183,7 +228,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       const SizedBox(width: 12),
 
                       if (desiredRange != null)
-                        Text('${desiredRange!.start.day}/${desiredRange!.start.month} - ${desiredRange!.end.day}/${desiredRange!.end.month}')
+                        Text(
+                          '${desiredRange!.start.day}/${desiredRange!.start.month} - ${desiredRange!.end.day}/${desiredRange!.end.month}',
+                        ),
                     ],
                   ),
                 ],
@@ -204,7 +251,7 @@ class _SearchScreenState extends State<SearchScreen> {
           // Devices stream and filtered list
           SizedBox(
             height: 260,
-            child: StreamBuilder<QuerySnapshot<Map<String,dynamic>>>(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: DeviceService().streamAllDevices(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -224,17 +271,24 @@ class _SearchScreenState extends State<SearchScreen> {
                   final data = doc.data();
 
                   final title = (data['title'] ?? '').toString().toLowerCase();
-                  final desc = (data['description'] ?? '').toString().toLowerCase();
+                  final desc = (data['description'] ?? '')
+                      .toString()
+                      .toLowerCase();
                   final category = (data['category'] ?? '').toString();
                   final price = (data['pricePerDay'] ?? 0).toDouble();
 
                   // Text search
-                  if (q.isNotEmpty && !(title.contains(q) || desc.contains(q) || category.toLowerCase().contains(q))) {
+                  if (q.isNotEmpty &&
+                      !(title.contains(q) ||
+                          desc.contains(q) ||
+                          category.toLowerCase().contains(q))) {
                     return false;
                   }
 
                   // Category filter
-                  if (selectedCategory != 'Alle' && category != selectedCategory) return false;
+                  if (selectedCategory != 'Alle' &&
+                      category != selectedCategory)
+                    return false;
 
                   // Price filter
                   if (price > maxPrice) return false;
@@ -245,12 +299,17 @@ class _SearchScreenState extends State<SearchScreen> {
                     final to = (data['availableTo']);
                     DateTime? availFrom;
                     DateTime? availTo;
-                    if (from != null && from is Timestamp) availFrom = from.toDate();
+                    if (from != null && from is Timestamp)
+                      availFrom = from.toDate();
                     if (to != null && to is Timestamp) availTo = to.toDate();
 
-                    if (availFrom != null && availTo != null && desiredRange != null) {
+                    if (availFrom != null &&
+                        availTo != null &&
+                        desiredRange != null) {
                       // require overlap
-                      if (availTo.isBefore(desiredRange!.start) || availFrom.isAfter(desiredRange!.end)) return false;
+                      if (availTo.isBefore(desiredRange!.start) ||
+                          availFrom.isAfter(desiredRange!.end))
+                        return false;
                     }
                   }
 
@@ -268,7 +327,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 }).toList();
 
                 if (filtered.isEmpty) {
-                  return const Center(child: Text('Geen toestellen gevonden met deze filters'));
+                  return const Center(
+                    child: Text('Geen toestellen gevonden met deze filters'),
+                  );
                 }
 
                 return ListView.builder(
@@ -282,6 +343,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       city: data["location"] ?? '',
                       price: "€${data["pricePerDay"]}/dag",
                       category: data["category"],
+                      imageUrl: (data["imageUrl"] ?? '').toString(),
                     );
                   },
                 );
@@ -301,7 +363,62 @@ class _SearchScreenState extends State<SearchScreen> {
     required String city,
     required String price,
     required String category,
+    required String imageUrl,
   }) {
+    Widget imageWidget;
+
+    if (imageUrl.isEmpty) {
+      imageWidget = Container(
+        height: 90,
+        decoration: BoxDecoration(
+          color: primaryGreen.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.inventory_2_outlined,
+            size: 42,
+            color: primaryGreen,
+          ),
+        ),
+      );
+    } else {
+      final isAsset = imageUrl.startsWith('assets/');
+
+      imageWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: isAsset
+            ? Image.asset(
+                imageUrl,
+                height: 90,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )
+            : Image.network(
+                imageUrl,
+                height: 90,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 90,
+                    decoration: BoxDecoration(
+                      color: primaryGreen.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        size: 34,
+                        color: primaryGreen,
+                      ),
+                    ),
+                  );
+                },
+              ),
+      );
+    }
+
     return Container(
       width: 180,
       margin: const EdgeInsets.only(right: 14),
@@ -321,20 +438,7 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 90,
-            decoration: BoxDecoration(
-              color: primaryGreen.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.inventory_2_outlined,
-                size: 42,
-                color: primaryGreen,
-              ),
-            ),
-          ),
+          imageWidget,
 
           const SizedBox(height: 12),
 
