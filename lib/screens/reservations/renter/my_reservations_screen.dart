@@ -113,190 +113,287 @@ class MyReservationsScreen extends StatelessWidget {
       BuildContext context,
       Map<String, dynamic> data,
       ) {
-    final title =
-    (data["deviceTitle"] ??
-        "Toestel")
-        .toString();
 
-    final category =
-    (data["deviceCategory"] ??
-        "")
-        .toString();
-
-    final status =
-    (data["status"] ??
-        "Gereserveerd")
+    final deviceId =
+    (data["deviceId"] ?? "")
         .toString();
 
     final ownerId =
     (data["ownerId"] ?? "")
         .toString();
 
-    final imageUrl =
-    (data["deviceImageUrl"] ??
-        "")
+    final status =
+    (data["status"] ?? "")
         .toString();
 
     final startDate =
-    _readDate(data["startDate"]);
+    _readDate(
+      data["fromDateTime"],
+    );
 
     final endDate =
-    _readDate(data["endDate"]);
+    _readDate(
+      data["toDateTime"],
+    );
 
     final period =
-        "${_formatDate(startDate)} - ${_formatDate(endDate)}";
+        "${_formatDate(startDate)} - "
+        "${_formatDate(endDate)}";
 
-    return Container(
-      margin:
-      const EdgeInsets.only(
-        bottom: 14,
-      ),
+    return FutureBuilder<DocumentSnapshot>(
 
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(
-            24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black
-                .withValues(
-                alpha: 0.04),
-            blurRadius: 18,
-            offset:
-            const Offset(0, 8),
+      future: FirebaseFirestore
+          .instance
+          .collection('devices')
+          .doc(deviceId)
+          .get(),
+
+      builder: (context, deviceSnapshot) {
+
+        if (!deviceSnapshot.hasData) {
+          return const SizedBox();
+        }
+
+        final deviceData =
+        deviceSnapshot.data!.data()
+        as Map<String, dynamic>?;
+
+        final title =
+            deviceData?['title'] ??
+                "Toestel";
+
+        final category =
+            deviceData?['category'] ??
+                "";
+
+        final imageUrl =
+            deviceData?['imageUrl'] ??
+                "";
+
+        return Container(
+          margin:
+          const EdgeInsets.only(
+            bottom: 14,
           ),
-        ],
-      ),
 
-      child: InkWell(
-        borderRadius:
-        BorderRadius.circular(
-            24),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  ReservationDetailScreen(
-                    reservation: data,
-                  ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+
+            borderRadius:
+            BorderRadius.circular(
+              24,
             ),
-          );
-        },
 
-        child: Padding(
-          padding:
-          const EdgeInsets.all(
-              16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black
+                    .withValues(
+                  alpha: 0.04,
+                ),
 
-          child: Row(
-            children: [
+                blurRadius: 18,
 
-              _buildDeviceImage(
-                  imageUrl),
+                offset:
+                const Offset(0, 8),
+              ),
+            ],
+          ),
 
-              const SizedBox(
-                  width: 14),
+          child: InkWell(
 
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
-                  children: [
+            borderRadius:
+            BorderRadius.circular(
+              24,
+            ),
 
-                    Text(
-                      title,
-                      style:
-                      const TextStyle(
-                        fontSize:
-                        17,
-                        fontWeight:
-                        FontWeight
-                            .bold,
+            onTap: () {
+
+              Navigator.push(
+                context,
+
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ReservationDetailScreen(
+                        reservation: data,
                       ),
-                    ),
+                ),
+              );
+            },
 
-                    if (category
-                        .isNotEmpty)
-                      Padding(
-                        padding:
-                        const EdgeInsets.only(
-                            top:
-                            4),
-                        child: Text(
-                          category,
+            child: Padding(
+
+              padding:
+              const EdgeInsets.all(
+                16,
+              ),
+
+              child: Row(
+                children: [
+
+                  _buildDeviceImage(
+                    imageUrl,
+                  ),
+
+                  const SizedBox(
+                    width: 14,
+                  ),
+
+                  Expanded(
+                    child: Column(
+
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .start,
+
+                      children: [
+
+                        Text(
+                          title,
+
+                          maxLines: 1,
+
+                          overflow:
+                          TextOverflow
+                              .ellipsis,
+
                           style:
                           const TextStyle(
+                            fontSize: 17,
+
+                            fontWeight:
+                            FontWeight
+                                .bold,
+                          ),
+                        ),
+
+                        if (category
+                            .isNotEmpty)
+
+                          Padding(
+                            padding:
+                            const EdgeInsets
+                                .only(
+                              top: 4,
+                            ),
+
+                            child: Text(
+                              category,
+
+                              style:
+                              const TextStyle(
+                                color: Colors
+                                    .black54,
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(
+                          height: 8,
+                        ),
+
+                        Text(
+                          "Periode: $period",
+
+                          style:
+                          const TextStyle(
+                            fontSize: 13,
+
                             color: Colors
                                 .black54,
                           ),
                         ),
-                      ),
 
-                    const SizedBox(
-                        height: 8),
+                        const SizedBox(
+                          height: 4,
+                        ),
 
-                    Text(
-                      "Periode: $period",
-                      style:
-                      const TextStyle(
-                        fontSize:
-                        13,
-                        color: Colors
-                            .black54,
-                      ),
-                    ),
+                        Text(
+                          "Status: $status",
 
-                    const SizedBox(
-                        height: 4),
-
-                    Text(
-                      "Status: $status",
-                      style:
-                      const TextStyle(
-                        fontSize:
-                        13,
-                        color:
-                        primaryGreen,
-                        fontWeight:
-                        FontWeight
-                            .w600,
-                      ),
-                    ),
-
-                    if (ownerId
-                        .isNotEmpty)
-                      Padding(
-                        padding:
-                        const EdgeInsets.only(
-                            top:
-                            4),
-                        child: Text(
-                          "Verhuurder: $ownerId",
                           style:
                           const TextStyle(
-                            fontSize:
-                            12,
-                            color: Colors
-                                .black45,
+                            fontSize: 13,
+
+                            color:
+                            primaryGreen,
+
+                            fontWeight:
+                            FontWeight
+                                .w600,
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
 
-              const Icon(
-                Icons.chevron_right,
-                color:
-                Colors.black38,
+                        if (ownerId
+                            .isNotEmpty)
+
+                          FutureBuilder<
+                              DocumentSnapshot>(
+
+                            future:
+                            FirebaseFirestore
+                                .instance
+                                .collection(
+                                'users')
+                                .doc(ownerId)
+                                .get(),
+
+                            builder:
+                                (context,
+                                ownerSnapshot) {
+
+                              if (!ownerSnapshot
+                                  .hasData) {
+
+                                return const SizedBox();
+                              }
+
+                              final ownerData =
+                              ownerSnapshot
+                                  .data!
+                                  .data()
+                              as Map<String,
+                                  dynamic>?;
+
+                              final ownerName =
+                                  "${ownerData?['firstName'] ?? ''} "
+                                  "${ownerData?['lastName'] ?? ''}";
+
+                              return Padding(
+
+                                padding:
+                                const EdgeInsets
+                                    .only(
+                                  top: 4,
+                                ),
+
+                                child: Text(
+                                  "Verhuurder: $ownerName",
+
+                                  style:
+                                  const TextStyle(
+                                    fontSize: 12,
+
+                                    color: Colors
+                                        .black45,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  const Icon(
+                    Icons.chevron_right,
+                    color: Colors.black38,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
