@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 import '../search/search_screen.dart';
 import '../profile/profile_screen.dart';
 import '../devices/add_device_screen.dart';
 import '../devices/my_offers_screen.dart';
-import '../reservations/my_reservations_screen.dart';
-import '../reservations/owner_reservations_screen.dart';
+import '../reservations/renter/my_reservations_screen.dart';
+import '../reservations/owner/owner_reservations_screen.dart';
 
 /// ======================================================
 /// HOME SCREEN
@@ -303,7 +304,7 @@ class _HomeScreenState
               /// Reservaties verhuurder
               _buildActionCard(
                 title:
-                "Mijn reservaties (verhuurder)",
+                "Mijn verhuringen",
                 subtitle:
                 "Bekijk reserveringen voor je eigen toestellen",
                 icon: Icons

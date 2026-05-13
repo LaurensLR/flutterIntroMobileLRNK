@@ -11,8 +11,8 @@ import '../auth/login_screen.dart';
 import '../rating/ratings_screen.dart';
 import 'profile_settings_screen.dart';
 import '../devices/my_offers_screen.dart';
-import '../reservations/my_reservations_screen.dart';
-import '../reservations/owner_reservations_screen.dart';
+import '../reservations/renter/my_reservations_screen.dart';
+import '../reservations/owner/owner_reservations_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

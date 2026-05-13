@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/device_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../reservations/reservation_comfirmation_screen.dart';
+import '../reservations/renter/reservation_comfirmation_screen.dart';
 
 
 /// ======================================================
@@ -22,7 +22,6 @@ class DeviceDetailScreen extends StatefulWidget {
 
 class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   static const Color primaryGreen = Color(0xFF2E7D32);
-  static const Color accentBlue = Color(0xFF0064D2);
 
   bool isFavorite = false;
   bool isReserving = false;

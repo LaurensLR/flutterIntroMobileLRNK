@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../services/reservation_service.dart';
+import '../../../services/reservation_service.dart';
 import 'reservation_detail_screen.dart';
 
-/// ======================================================
-/// LOPENDE VERHURINGEN SCREEN
-/// ======================================================
-
-class OwnerReservationsScreen extends StatelessWidget {
-  const OwnerReservationsScreen({super.key});
+class MyReservationsScreen extends StatelessWidget {
+  const MyReservationsScreen({super.key});
 
   static const Color primaryGreen =
   Color(0xFF2E7D32);
@@ -79,7 +75,7 @@ class OwnerReservationsScreen extends StatelessWidget {
               18),
         ),
         child: const Icon(
-          Icons.inventory_2_outlined,
+          Icons.event_note_outlined,
           color: primaryGreen,
           size: 28,
         ),
@@ -88,7 +84,7 @@ class OwnerReservationsScreen extends StatelessWidget {
 
     final isAsset =
     imageUrl.startsWith(
-        'assets/');
+        "assets/");
 
     return ClipRRect(
       borderRadius:
@@ -110,10 +106,10 @@ class OwnerReservationsScreen extends StatelessWidget {
   }
 
   /// --------------------------------------------------
-  /// Verhuring kaart
+  /// Reservatie kaart
   /// --------------------------------------------------
 
-  Widget _buildRentalCard(
+  Widget _buildReservationCard(
       BuildContext context,
       Map<String, dynamic> data,
       ) {
@@ -129,11 +125,11 @@ class OwnerReservationsScreen extends StatelessWidget {
 
     final status =
     (data["status"] ??
-        "Actief")
+        "Gereserveerd")
         .toString();
 
-    final renterId =
-    (data["renterId"] ?? "")
+    final ownerId =
+    (data["ownerId"] ?? "")
         .toString();
 
     final imageUrl =
@@ -270,7 +266,7 @@ class OwnerReservationsScreen extends StatelessWidget {
                       ),
                     ),
 
-                    if (renterId
+                    if (ownerId
                         .isNotEmpty)
                       Padding(
                         padding:
@@ -278,7 +274,7 @@ class OwnerReservationsScreen extends StatelessWidget {
                             top:
                             4),
                         child: Text(
-                          "Huurder: $renterId",
+                          "Verhuurder: $ownerId",
                           style:
                           const TextStyle(
                             fontSize:
@@ -322,11 +318,11 @@ class OwnerReservationsScreen extends StatelessWidget {
           foregroundColor:
           Colors.black,
           title: const Text(
-            "Lopende verhuringen",
+            "Mijn reservaties",
           ),
         ),
         body: _buildStateMessage(
-          "Log in om je verhuringen te zien.",
+          "Log in om je reservaties te zien.",
         ),
       );
     }
@@ -342,7 +338,7 @@ class OwnerReservationsScreen extends StatelessWidget {
         foregroundColor:
         Colors.black,
         title: const Text(
-          "Lopende verhuringen",
+          "Mijn reservaties",
           style: TextStyle(
             fontWeight:
             FontWeight.bold,
@@ -354,7 +350,7 @@ class OwnerReservationsScreen extends StatelessWidget {
           QuerySnapshot<
               Map<String, dynamic>>>(
         stream: ReservationService()
-            .streamReservationsForOwner(
+            .streamReservationsForRenter(
             user.uid),
 
         builder:
@@ -375,7 +371,7 @@ class OwnerReservationsScreen extends StatelessWidget {
 
           if (snapshot.hasError) {
             return _buildStateMessage(
-              "Fout bij laden van verhuringen.",
+              "Fout bij laden van reservaties.",
             );
           }
 
@@ -385,7 +381,7 @@ class OwnerReservationsScreen extends StatelessWidget {
 
           if (docs.isEmpty) {
             return _buildStateMessage(
-              "Nog geen lopende verhuringen.",
+              "Nog geen reservaties.",
             );
           }
 
@@ -397,9 +393,13 @@ class OwnerReservationsScreen extends StatelessWidget {
             docs.length,
             itemBuilder:
                 (context, index) {
-              return _buildRentalCard(
+              final doc = docs[index];
+              final reservation =
+              doc.data();
+              reservation['id'] = doc.id;
+              return _buildReservationCard(
                 context,
-                docs[index].data(),
+                reservation,
               );
             },
           );

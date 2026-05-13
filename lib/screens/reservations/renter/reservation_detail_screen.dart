@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../rating/rate_screen.dart';
+import '../../rating/rate_screen.dart';
 
-class ReservationDetailScreen extends StatelessWidget {
+class ReservationDetailScreen
+    extends StatefulWidget {
+
   const ReservationDetailScreen({
     super.key,
     required this.reservation,
@@ -11,8 +13,93 @@ class ReservationDetailScreen extends StatelessWidget {
 
   final Map<String, dynamic> reservation;
 
+  @override
+  State<ReservationDetailScreen>
+  createState() => _ReservationDetailScreenState();
+}
+
+
+class _ReservationDetailScreenState extends State<ReservationDetailScreen> {
+
   static const Color primaryGreen =
   Color(0xFF2E7D32);
+  bool alreadyReviewed = false;
+
+  Future<bool> hasReviewed() async {
+
+    final snapshot =
+    await FirebaseFirestore.instance
+        .collection('reservations')
+        .doc(widget.reservation['id'])
+        .collection('reviews')
+        .where(
+      'reviewerId',
+      isEqualTo:
+      widget.reservation['renterId'],
+    )
+        .get();
+
+    return snapshot.docs.isNotEmpty;
+  }
+
+  Future<void> updateCompletedReservations() async {
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('reservations')
+        .get();
+
+    for (final doc in snapshot.docs) {
+
+      final data = doc.data();
+
+      final status =
+      (data['status'] ?? '')
+          .toString()
+          .toLowerCase();
+
+      // geannuleerde overslaan
+      if (status == 'geannuleerd') {
+        continue;
+      }
+
+      if (data['toDateTime'] == null) {
+        continue;
+      }
+
+      final toDateTime =
+      (data['toDateTime'] as Timestamp)
+          .toDate();
+
+      // reservatie afgelopen
+      if (DateTime.now().isAfter(toDateTime)) {
+
+        await doc.reference.update({
+          'status': 'Voltooid',
+        });
+      }
+    }
+  }
+
+  Future<void> loadReviewStatus() async {
+
+    final reviewed =
+    await hasReviewed();
+
+    if (mounted) {
+      setState(() {
+        alreadyReviewed = reviewed;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadReviewStatus();
+    updateCompletedReservations();
+  }
+
 
   DateTime? _readDate(dynamic value) {
     if (value is Timestamp) {
@@ -147,9 +234,7 @@ class ReservationDetailScreen extends StatelessWidget {
         future: FirebaseFirestore
             .instance
             .collection('devices')
-            .doc(
-          reservation['deviceId'],
-        )
+            .doc(widget.reservation['deviceId'],)
             .get(),
 
         builder:
@@ -187,7 +272,7 @@ class ReservationDetailScreen extends StatelessWidget {
                 .instance
                 .collection('users')
                 .doc(
-              reservation['ownerId'],
+              widget.reservation['ownerId'],
             )
                 .get(),
 
@@ -240,30 +325,26 @@ class ReservationDetailScreen extends StatelessWidget {
                       '';
 
               // RESERVATION
-              final status =
-                  reservation['status'] ??
-                      'Pending';
+              final status = widget.reservation['status'] ?? 'Pending';
 
               final totalPrice =
-              _readPrice(
-                reservation['totalPrice'],
-              );
+              _readPrice(widget.reservation['totalPrice'],);
 
               final fromDateTime =
               _readDate(
-                reservation[
+                widget.reservation[
                 'fromDateTime'],
               );
 
               final toDateTime =
               _readDate(
-                reservation[
+                widget.reservation[
                 'toDateTime'],
               );
 
               final createdAt =
               _readDate(
-                reservation['createdAt'],
+                widget.reservation['createdAt'],
               );
 
               return SafeArea(
@@ -661,35 +742,31 @@ class ReservationDetailScreen extends StatelessWidget {
                             Icons.star_rounded,
                           ),
 
-                          label: const Text(
-                            "Schrijf een recensie",
+                          label: Text(
+                            alreadyReviewed
+                                ? "Recensie geschreven"
+                                : "Schrijf een recensie",
                           ),
 
-                          onPressed: toDateTime != null &&
-                              DateTime.now().isAfter(
-                                toDateTime,
-                              )
-                              ? () {
-
-                            Navigator.push(
+                          onPressed:
+                          status.toLowerCase() == "voltooid" && !alreadyReviewed
+                              ? () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => RateScreen(
-
-                                  deviceId:
-                                  reservation['deviceId'],
-
-                                  ownerId:
-                                  reservation['ownerId'],
-
-                                  reviewerId:
-                                  reservation['renterId'],
-
+                                  reservationId: widget.reservation['id'],
+                                  deviceId: widget.reservation['deviceId'],
+                                  ownerId: widget.reservation['ownerId'],
+                                  reviewerId: widget.reservation['renterId'],
                                 ),
                               ),
                             );
+
+                            // ✅ Herlaad review status na terugkeer
+                            if (mounted) loadReviewStatus();
                           }
-                          : null,
+                              : null,
 
                           style:
                           ElevatedButton
@@ -794,7 +871,7 @@ class ReservationDetailScreen extends StatelessWidget {
                             await FirebaseFirestore
                                 .instance
                                 .collection('reservations')
-                                .doc(reservation['id'])
+                                .doc(widget.reservation['id'])
                                 .update({
                               'status': 'Geannuleerd',
                             });
